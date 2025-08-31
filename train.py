@@ -29,8 +29,27 @@ class ChurnModelPipeline:
         """Load and shuffle data, then split into features and target."""
         print("Loading data...")
         df = pd.read_csv(self.data_path, index_col=self.index_col, nrows=nrows)
+        
+        # Debug: Print actual column names
+        print("Actual columns in DataFrame:")
+        print(df.columns.tolist())
+        print(f"DataFrame shape: {df.shape}")
+        print(f"First few rows:")
+        print(df.head())
+        
         if drop_columns:
-            df = df.drop(drop_columns, axis=1)
+            # Check which columns exist before dropping
+            existing_cols = [col for col in drop_columns if col in df.columns]
+            missing_cols = [col for col in drop_columns if col not in df.columns]
+            
+            if missing_cols:
+                print(f"Warning: These columns are missing and will be skipped: {missing_cols}")
+            if existing_cols:
+                print(f"Dropping these existing columns: {existing_cols}")
+                df = df.drop(existing_cols, axis=1)
+            else:
+                print("No columns to drop - all specified columns are missing")
+        
         df = df.sample(frac=1)  # Shuffle the data
         X = df.drop(self.target_column, axis=1)
         y = df[self.target_column]
@@ -39,6 +58,7 @@ class ChurnModelPipeline:
         )
         print("Data loaded and split successfully.")
 
+        
     def build_preprocessor(self, cat_cols, num_cols):
         """Create the preprocessing pipeline for numerical and categorical data."""
         print("Building preprocessing pipeline...")
