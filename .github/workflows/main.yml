@@ -14,16 +14,51 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4  # Updated to v4
         with:
           lfs: true
+          
+      - name: Debug Git LFS
+        run: |
+          echo "=== Git LFS Status ==="
+          git lfs version
+          git lfs ls-files
+          echo "=== File Information ==="
+          ls -la *.csv || echo "No CSV files found"
+          if [ -f "Churn_Modelling.csv" ]; then
+            echo "File size:"
+            wc -c Churn_Modelling.csv
+            echo "File type:"
+            file Churn_Modelling.csv
+            echo "First 5 lines:"
+            head -5 Churn_Modelling.csv
+          else
+            echo "Churn_Modelling.csv not found"
+          fi
+          
+      - name: Force Git LFS Pull (if needed)
+        run: |
+          git lfs pull
+          echo "After LFS pull:"
+          ls -la *.csv || echo "No CSV files found after LFS pull"
+          if [ -f "Churn_Modelling.csv" ]; then
+            echo "File size after LFS pull:"
+            wc -c Churn_Modelling.csv
+            echo "First 2 lines after LFS pull:"
+            head -2 Churn_Modelling.csv
+          fi
+          
       - uses: iterative/setup-cml@v2
+      
       - name: Install Packages
         run: pip install --upgrade pip && pip install -r requirements.txt
+        
       - name: Format
         run: black *.py
+        
       - name: Train
         run: python train.py
+        
       - name: Evaluation
         env:
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
